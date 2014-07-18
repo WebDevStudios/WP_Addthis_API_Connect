@@ -37,6 +37,16 @@ class WP_Addthis_API_Connect {
 		$this->args = $args;
 	}
 
+	/**
+	 * Retrieve shares data from cache (falls back to retrieving from Addthis API)
+	 *
+	 * @since  0.1.0
+	 *
+	 * @param  array  $endpoint Which analytics endpoint to retrieve
+	 * @param  array  $args     Array of query arguments
+	 *
+	 * @return object           Addthis shares data on success
+	 */
 	public function get_shares( $endpoint, $args = array() ) {
 		$transient_id = md5( serialize( array(
 			'class'  => __CLASS__,
@@ -62,6 +72,15 @@ class WP_Addthis_API_Connect {
 		return $shares;
 	}
 
+	/**
+	 * Retrieve shares data from Addthis API
+	 *
+	 * @since  0.1.0
+	 *
+	 * @param  array  $query_args Array of query arguments
+	 *
+	 * @return object             Addthis shares data on success
+	 */
 	public function _get_shares( $query_args = array() ) {
 
 		$query_args = wp_parse_args( $query_args, array(
@@ -85,11 +104,29 @@ class WP_Addthis_API_Connect {
 		return $body && $json ? $json : $body;
 	}
 
+	/**
+	 * Get analytics endpoint URL
+	 *
+	 * @since  0.1.0
+	 *
+	 * @param  string  $path Which analytics endpoint to retrieve
+	 *
+	 * @return string        Addthis analytics endpoint URL
+	 */
 	public function analytics_url( $path = '' ) {
 		$base_url = $this->addthis_base_url . 'analytics/' . $this->api_version . '/';
 		return $path ? $base_url . $path : $base_url;
 	}
 
+	/**
+	 * Helper function for getting a transient w/ arguments for a callback function
+	 *
+	 * @since  0.1.0
+	 *
+	 * @param  array $args Arguments array
+	 *
+	 * @return mixed       Transient value
+	 */
 	public function get_transient( $args = array() ) {
 
 		$args = wp_parse_args( $args, array(
@@ -117,6 +154,15 @@ class WP_Addthis_API_Connect {
 		return $transient;
 	}
 
+	/**
+	 * If using transients (and no object cache), get time the cache expires
+	 *
+	 * @since  0.1.0
+	 *
+	 * @param  string $transient_id Transient identifier
+	 *
+	 * @return string               Time of expiration or 'unknown'
+	 */
 	public function expires_time( $transient_id ) {
 		if ( $expires = get_option( '_transient_timeout_' . $transient_id ) ) {
 			return date( 'F j, Y, g:i a', $expires );
@@ -124,17 +170,45 @@ class WP_Addthis_API_Connect {
 		return 'unknown';
 	}
 
+	/**
+	 * Generates the authorized header array
+	 *
+	 * @since  0.1.0
+	 *
+	 * @return array  Request header array
+	 */
 	public function authorized_headers() {
 		return array(
 			'Authorization' => 'Basic ' . $this->args['authorization'],
 		);
 	}
 
+	/**
+	 * Normalize each parameter by assuming each parameter may have already been encoded,
+	 * so attempt to decode, and then re-encode according to RFC 3986
+	 *
+	 * @since  0.1.0
+	 *
+	 * @see rawurlencode()
+	 *
+	 * @param string $key
+	 * @param string $value
+	 */
  	protected function normalize_parameters( &$key, &$value ) {
 		$key = rawurlencode( rawurldecode( $key ) );
 		$value = rawurlencode( rawurldecode( $value ) );
 	}
 
+	/**
+	 * Appends WP_Addthis_API_Connect data to the Addthis responses
+	 *
+	 * @since  0.1.0
+	 *
+	 * @param  array|object  $data      Addthis data object
+	 * @param  array         $to_append Array of data to append to the api_request object
+	 *
+	 * @return array|object             Modified Addthis data object
+	 */
 	public function append_data( $data, array $to_append ) {
 		if ( is_object( $data ) ) {
 			if ( isset( $data->api_request ) ) {
